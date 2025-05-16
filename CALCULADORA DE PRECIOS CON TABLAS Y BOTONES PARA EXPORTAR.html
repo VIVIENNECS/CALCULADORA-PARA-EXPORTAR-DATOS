@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Precios 🚀</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f4f9; /* Un tono lila muy suave */
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 900px; /* Aumentamos el ancho máximo para pantallas más grandes */
+            margin: auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #6f42c1; /* Color morado más intenso */
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: fadeIn 1s; /* Animación de entrada */
+        }
+        p {
+            color: #555;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 15px; /* Bordes más redondeados */
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); /* Sombra más suave y pronunciada */
+            border: none; /* Eliminamos el borde por defecto de la tarjeta */
+        }
+        .card-title {
+            color: #6f42c1; /* Morado para el título de la tarjeta */
+            text-align: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem; /* Aumentamos el tamaño del título */
+            font-weight: bold;
+        }
+        .form-label {
+            font-weight: 500;
+            color: #777; /* Un gris un poco más oscuro */
+            margin-bottom: 0.5rem;
+        }
+        .form-control {
+            border-radius: 10px; /* Bordes redondeados para los inputs */
+            border: 2px solid #e0d4f5; /* Borde más suave y claro */
+            padding: 0.8rem; /* Aumentamos el padding vertical */
+            transition: border-color 0.3s ease; /* Transición suave del borde */
+        }
+        .form-control:focus {
+            border-color: #a78bfa; /* Morado más claro al hacer focus */
+            box-shadow: 0 0 0 3px rgba(103, 58, 183, 0.1); /* Sombra de foco más suave */
+            outline: none; /* Eliminamos el outline por defecto */
+        }
+        .btn-primary {
+            background-color: #a78bfa; /* Un tono lila más claro y vibrante */
+            border: none;
+            padding: 0.8rem 2rem; /* Aumentamos el padding del botón */
+            border-radius: 10px; /* Bordes redondeados para el botón */
+            font-weight: 600; /* Texto del botón en negrita */
+            transition: background-color 0.3s ease, transform 0.2s ease; /* Transiciones suaves */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05); /* Sombra ligera */
+        }
+        .btn-primary:hover {
+            background-color: #9370db; /* Un tono lila más oscuro al hacer hover */
+            transform: translateY(-2px); /* Ligeramente hacia arriba al hacer hover */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1); /* Aumentamos la sombra al hacer hover */
+        }
+        .btn-primary:active {
+            background-color: #8360b1; /* Un tono lila aún más oscuro al hacer click */
+            transform: translateY(0); /* Sin transformación al hacer click */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Reducimos la sombra al hacer click */
+        }
+        #resultado {
+            margin-top: 2.5rem; /* Aumentamos el margen superior */
+            padding: 1.5rem; /* Aumentamos el padding del resultado */
+            background-color: #f8f0fb; /* Un tono lila muy claro para el resultado */
+            border-radius: 15px; /* Bordes redondeados para el resultado */
+            border: 2px solid #e0d4f5; /* Borde suave y claro */
+            text-align: center;
+            animation: fadeIn 1s, pulse 1s infinite alternate; /* Animaciones de entrada y pulso */
+        }
+        #resultado h2 {
+            color: #6f42c1; /* Morado para el título del resultado */
+            margin-bottom: 1rem;
+            font-size: 2rem; /* Aumentamos el tamaño del título del resultado */
+            font-weight: bold; /* Texto del título en negrita */
+        }
+        #resultado p {
+            font-size: 1.2rem; /* Aumentamos el tamaño del texto del resultado */
+            color: #555; /* Gris un poco más oscuro */
+            margin-bottom: 0.75rem; /* Aumentamos el margen inferior del párrafo */
+        }
+        #resultado p strong {
+            color: #6f42c1; /* Morado para los valores importantes en el resultado */
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes pulse {
+            from {
+                transform: scale(1);
+            }
+            to {
+                transform: scale(1.04); /* Un pulso más suave */
+            }
+        }
+        /* Estilos para el emoji */
+        .emoji {
+            font-size: 2rem; /* Tamaño del emoji */
+            margin-left: 0.5rem; /* Espacio a la izquierda del emoji */
+            vertical-align: middle; /* Alineación vertical con el texto */
+            animation: spin 2s infinite linear; /* Animación de rotación */
+        }
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Estilos para la tabla */
+        #tablaProductos {
+            margin-top: 3rem;
+            border-collapse: collapse;
+            width: 100%;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden; /* Para que el borde redondeado se aplique a la tabla */
+            animation: fadeIn 1s;
+        }
+        #tablaProductos thead th {
+            background-color: #a78bfa;
+            color: white;
+            padding: 1.2rem;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #9370db;
+        }
+        #tablaProductos tbody tr:nth-child(odd) {
+            background-color: #f8f0fb; /* Un tono lila muy claro para las filas impares */
+        }
+        #tablaProductos tbody tr:hover {
+            background-color: #f0e6ef; /* Un tono lila aún más claro al hacer hover */
+        }
+        #tablaProductos td {
+            padding: 1.2rem;
+            border-bottom: 1px solid #e0d4f5;
+        }
+        #tablaProductos tbody tr:last-child td {
+            border-bottom: none;
+        }
+        #tablaProductos tfoot td {
+            padding: 1.2rem;
+            text-align: center;
+            font-weight: bold;
+            color: #6f42c1;
+        }
+
+        /* Estilos para los botones de exportar y limpiar */
+        .export-buttons {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+            gap: 1rem;
+        }
+        .export-btn, .clear-btn, .save-btn {
+            background-color: #a78bfa;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            border: none;
+            cursor: pointer;
+        }
+        .export-btn:hover, .clear-btn:hover, .save-btn:hover {
+            background-color: #9370db;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        .export-btn:active, .clear-btn:active, .save-btn:active {
+            background-color: #8360b1;
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .clear-btn {
+            background-color: #dc3545; /* Rojo para el botón de limpiar */
+        }
+        .clear-btn:hover {
+            background-color: #c82333;
+        }
+        .clear-btn:active {
+            background-color: #b21e2d;
+        }
+        .save-btn {
+            background-color: #28a745; /* Verde para el botón de guardar */
+        }
+        .save-btn:hover {
+            background-color: #218838;
+        }
+        .save-btn:active {
+            background-color: #1e7e34;
+        }
+
+        /* Media query para hacerlo responsive en móviles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .card {
+                padding: 20px;
+            }
+            #resultado {
+                padding: 1rem;
+            }
+            h1 {
+                font-size: 2.2rem; /* Ajustamos el tamaño del título principal en móviles */
+            }
+            .card-title {
+                font-size: 1.6rem; /* Ajustamos el tamaño del título de la tarjeta en móviles */
+            }
+            #resultado h2 {
+                font-size: 1.8rem; /* Ajustamos el tamaño del título del resultado en móviles */
+            }
+            #resultado p {
+                font-size: 1rem; /* Ajustamos el tamaño del párrafo del resultado en móviles */
+            }
+            .form-control {
+                padding: 0.7rem;
+            }
+            .btn-primary {
+                padding: 0.7rem 1.5rem;
+            }
+            .emoji {
+                font-size: 1.5rem; /* Ajustamos el tamaño del emoji en móviles */
+            }
+            #tablaProductos {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+                font-size: 0.9rem;
+            }
+            #tablaProductos thead, #tablaProductos tbody, #tablaProductos tfoot {
+                display: block;
+            }
+            #tablaProductos thead th {
+                text-align: left;
+            }
+            #tablaProductos thead tr,
+            #tablaProductos tbody tr,
+            #tablaProductos tfoot tr {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+            #tablaProductos th,
+            #tablaProductos td {
+                border-bottom: 1px solid #e0d4f5;
+                padding: 0.7rem;
+                text-align: left;
+                flex: 1;
+            }
+            #tablaProductos th:last-child,
+            #tablaProductos td:last-child {
+                border-right: none;
+            }
+            #tablaProductos thead tr {
+                background-color: #a78bfa;
+                color: white;
+            }
+            #tablaProductos tfoot tr {
+                background-color: transparent;
+                color: #6f42c1;
+            }
+            .export-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            .export-btn, .clear-btn, .save-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container">
+        <h1 class="animate__animated animate__fadeIn">Calculadora de Precios para Emprendedores 🚀</h1>
+        <p>
+            Ingresa el costo base de tu producto y el porcentaje de ganancia que deseas obtener.
+            ¡Calcularemos el precio de venta sugerido y tu margen de ganancia!
+        </p>
+
+        <div class="card animate__animated animate__fadeInUp">
+            <div class="card-body">
+                <h2 class="card-title">Calcula tu Precio de Venta 💰</h2>
+                <form id="calculadoraForm">
+                    <div class="mb-4">
+                        <label for="nombreProducto" class="form-label">Nombre del Producto:</label>
+                        <input type="text" class="form-control" id="nombreProducto" placeholder="Ej: Camiseta Algodón" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="cantidadInventario" class="form-label">Cantidad en Inventario:</label>
+                        <input type="number" class="form-control" id="cantidadInventario" placeholder="Ej: 100" required min="0">
+                    </div>
+                    <div class="mb-4">
+                        <label for="costoBase" class="form-label">Costo Base del Producto:</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="costoBase" placeholder="Ej: 25.00" required min="0">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="porcentajeGanancia" class="form-label">Porcentaje de Ganancia (%):</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="porcentajeGanancia" placeholder="Ej: 30" required min="0">
+                            <span class="input-group-text">%</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Calcular Precio de Venta</button>
+                </form>
+            </div>
+        </div>
+
+        <div id="resultado" class="mt-5 animate__animated animate__fadeIn">
+            <h2>¡Tu Precio Sugerido! 🎉</h2>
+            <p>Nombre del Producto: <strong id="nombreProductoResultado"></strong></p>
+             <p>Cantidad en Inventario: <strong id="cantidadInventarioResultado"></strong></p>
+            <p>Precio de Venta Sugerido: <strong>$ <span id="precioVenta">0.00</span></strong></p>
+            <p>Margen de Ganancia: <strong>$ <span id="margenGanancia">0.00</span></strong> <span class="emoji">🤑</span></p>
+        </div>
+
+        <table id="tablaProductos">
+            <thead>
+                <tr>
+                    <th>Nombre Producto</th>
+                    <th>Cantidad en Inventario</th>
+                    <th>Costo Base</th>
+                    <th>Porcentaje Ganancia</th>
+                    <th>Precio Venta</th>
+                    <th>Margen Ganancia</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6">Total de Productos: <span id="totalProductos">0</span></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="export-buttons">
+            <button id="exportarPDF" class="export-btn">Exportar a PDF</button>
+            <button id="exportarExcel" class="export-btn">Exportar a Excel</button>
+            <button id="limpiarTabla" class="clear-btn">Limpiar Tabla</button>
+            <button id="guardarLocal" class="save-btn">Guardar Datos</button>
+        </div>
+    </div>
+
+    <script>
+        const calculadoraForm = document.getElementById('calculadoraForm');
+        const nombreProductoInput = document.getElementById('nombreProducto');
+        const cantidadInventarioInput = document.getElementById('cantidadInventario');
+        const costoBaseInput = document.getElementById('costoBase');
+        const porcentajeGananciaInput = document.getElementById('porcentajeGanancia');
+        const precioVentaSpan = document.getElementById('precioVenta');
+        const margenGananciaSpan = document.getElementById('margenGanancia');
+        const resultadoDiv = document.getElementById('resultado');
+        const nombreProductoResultado = document.getElementById('nombreProductoResultado');
+        const cantidadInventarioResultado = document.getElementById('cantidadInventarioResultado');
+        const tablaProductos = document.getElementById('tablaProductos').getElementsByTagName('tbody')[0];
+        const totalProductosSpan = document.getElementById('totalProductos');
+        const exportarPDFBtn = document.getElementById('exportarPDF');
+        const exportarExcelBtn = document.getElementById('exportarExcel');
+        const limpiarTablaBtn = document.getElementById('limpiarTabla');
+        const guardarLocalBtn = document.getElementById('guardarLocal');
+
+        let totalProductos = 0;
+        let productos = []; // Array para almacenar los productos calculados
+
+        // Cargar datos desde localStorage al cargar la página
+        if (localStorage.getItem('productos')) {
+            productos = JSON.parse(localStorage.getItem('productos'));
+            totalProductos = productos.length;
+            totalProductosSpan.textContent = totalProductos;
+            productos.forEach(producto => {
+                let newRow = tablaProductos.insertRow();
+                let nombreCell = newRow.insertCell();
+                let cantidadInventarioCell = newRow.insertCell();
+                let costoBaseCell = newRow.insertCell();
+                let porcentajeGananciaCell = newRow.insertCell();
+                let precioVentaCell = newRow.insertCell();
+                let margenGananciaCell = newRow.insertCell();
+
+                nombreCell.textContent = producto.nombreProducto;
+                cantidadInventarioCell.textContent = producto.cantidadInventario;
+                costoBaseCell.textContent = producto.costoBase.toFixed(2);
+                porcentajeGananciaCell.textContent = producto.porcentajeGanancia.toFixed(2);
+                precioVentaCell.textContent = producto.precioVenta.toFixed(2);
+                margenGananciaCell.textContent = producto.margenGanancia.toFixed(2);
+            });
+        }
+
+        calculadoraForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const nombreProducto = nombreProductoInput.value;
+            const cantidadInventario = parseInt(cantidadInventarioInput.value);
+            const costoBase = parseFloat(costoBaseInput.value);
+            const porcentajeGanancia = parseFloat(porcentajeGananciaInput.value);
+
+            if (isNaN(costoBase) || isNaN(porcentajeGanancia) || costoBase < 0 || porcentajeGanancia < 0 || !nombreProducto || isNaN(cantidadInventario) || cantidadInventario < 0) {
+                alert('Por favor, ingresa valores válidos para todos los campos.');
+                return;
+            }
+
+            const porcentajeGananciaDecimal = porcentajeGanancia / 100;
+            const precioVenta = costoBase / (1 - porcentajeGananciaDecimal);
+            const margenGanancia = precioVenta - costoBase;
+
+            nombreProductoResultado.textContent = nombreProducto;
+            cantidadInventarioResultado.textContent = cantidadInventario;
+            precioVentaSpan.textContent = precioVenta.toFixed(2);
+            margenGananciaSpan.textContent = margenGanancia.toFixed(2);
+            resultadoDiv.classList.remove('d-none');
+
+            // Agregamos una nueva fila a la tabla
+            let newRow = tablaProductos.insertRow();
+            let nombreCell = newRow.insertCell();
+            let cantidadInventarioCell = newRow.insertCell();
+            let costoBaseCell = newRow.insertCell();
+            let porcentajeGananciaCell = newRow.insertCell();
+            let precioVentaCell = newRow.insertCell();
+            let margenGananciaCell = newRow.insertCell();
+
+            nombreCell.textContent = nombreProducto;
+            cantidadInventarioCell.textContent = cantidadInventario;
+            costoBaseCell.textContent = costoBase.toFixed(2);
+            porcentajeGananciaCell.textContent = porcentajeGanancia.toFixed(2);
+            precioVentaCell.textContent = precioVenta.toFixed(2);
+            margenGananciaCell.textContent = margenGanancia.toFixed(2);
+
+            totalProductos++;
+            totalProductosSpan.textContent = totalProductos;
+
+            // Agregamos el producto al array
+            productos.push({
+                nombreProducto: nombreProducto,
+                cantidadInventario: cantidadInventario,
+                costoBase: costoBase,
+                porcentajeGanancia: porcentajeGanancia,
+                precioVenta: precioVenta,
+                margenGanancia: margenGanancia
+            });
+
+            // Limpiamos el formulario para la próxima entrada
+            nombreProductoInput.value = '';
+            cantidadInventarioInput.value = '';
+            costoBaseInput.value = '';
+            porcentajeGananciaInput.value = '';
+        });
+
+        exportarPDFBtn.addEventListener('click', () => {
+            if (productos.length === 0) {
+                alert('No hay productos para exportar.');
+                return;
+            }
+
+            const doc = new jsPDF();
+            doc.setFontSize(20);
+            doc.text('Lista de Productos', 10, 10);
+            doc.setFontSize(12);
+
+            let y = 20;
+            productos.forEach(producto => {
+                doc.text(`Nombre: ${producto.nombreProducto}`, 10, y);
+                doc.text(`Cantidad: ${producto.cantidadInventario}`, 10, y + 5);
+                doc.text(`Costo Base: $${producto.costoBase.toFixed(2)}`, 10, y + 10);
+                doc.text(`Ganancia: ${producto.porcentajeGanancia}%`, 10, y + 15);
+                doc.text(`Precio Venta: $${producto.precioVenta.toFixed(2)}`, 10, y + 20);
+                doc.text(`Margen: $${producto.margenGanancia.toFixed(2)}`, 10, y + 25);
+                y += 35;
+            });
+
+            doc.save('productos.pdf');
+        });
+
+        exportarExcelBtn.addEventListener('click', () => {
+            if (productos.length === 0) {
+                alert('No hay productos para exportar.');
+                return;
+            }
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(productos);
+            XLSX.utils.book_append_sheet(wb, ws, 'Productos');
+            XLSX.writeFile(wb, 'productos.xlsx');
+        });
+
+        limpiarTablaBtn.addEventListener('click', () => {
+            tablaProductos.innerHTML = '';
+            totalProductos = 0;
+            totalProductosSpan.textContent = totalProductos;
+            productos = []; // Limpiamos el array de productos
+            localStorage.removeItem('productos'); // Eliminamos los datos del localStorage
+        });
+
+        guardarLocalBtn.addEventListener('click', () => {
+            if (productos.length === 0) {
+                alert('No hay productos para guardar.');
+                return;
+            }
+            localStorage.setItem('productos', JSON.stringify(productos));
+            alert('¡Datos guardados en el navegador!');
+        });
+    </script>
+</body>
+</html>
